@@ -6,13 +6,16 @@ void setup() {
   pinMode(SER, OUTPUT);
   pinMode(LATCH, OUTPUT);
   pinMode(CLK, OUTPUT);
-  
-  digitalWrite(LATCH, LOW);
-  shiftOut(SER, CLK, MSBFIRST, B10101010);
-  digitalWrite(LATCH, HIGH);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-
+  digitalWrite(LATCH, LOW);
+  shiftOut(SER, CLK, LSBFIRST, B10101010);
+  digitalWrite(LATCH, HIGH);
+  delay(2000);
+  
+  digitalWrite(LATCH, LOW);
+  shiftOut(SER, CLK, LSBFIRST, B01010101);
+  digitalWrite(LATCH, HIGH);
+  delay(2000);
 }
