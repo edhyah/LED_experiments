@@ -13,4 +13,9 @@ Soldering iron
 Solder
 Your brain
 
+** refer to schematic.jpg for assistance **
+** note that the schematic is for a 4x4  **
+** the schematic for an 8x24 will differ **
+
 Procedure:
+
