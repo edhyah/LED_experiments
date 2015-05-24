@@ -13,9 +13,10 @@ Soldering iron
 Solder
 Your brain
 
-** refer to schematic.jpg for assistance **
-** note that the schematic is for a 4x4  **
-** the schematic for an 8x24 will differ **
+Notes:
+* Refer to schematic.jpg for assistance
+  ** Be aware that schematic is for a 4x4 LED matrix
+* Refer to progress folder for visual guidance
 
 Procedure:
 
