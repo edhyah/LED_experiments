@@ -1,17 +1,16 @@
 Final LED Matrix
-(8x24 matrix)
+(8x16 matrix)
 
 Materials:
-192 LEDs
-24 330 ohm resistors
-8x24 or larger perfboard
-4 74HC595 shift registers
+128 LEDs
+16 330 ohm resistors
+8x16 or larger perfboard
+3 74HC595 shift registers
 1 Arduino Uno w/ its serial cable
 
 Required Tools:
 Soldering iron
 Solder
-Your brain
 
 Notes:
 * Refer to schematic.jpg for assistance
