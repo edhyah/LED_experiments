@@ -16,7 +16,6 @@ Solder
 Notes:
 * Refer to schematic.jpg for assistance
   ** Be aware that schematic is for a 4x4 LED matrix
-* Refer to progress folder for visual guidance
 
 Procedure:
 
