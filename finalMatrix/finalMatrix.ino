@@ -8,7 +8,20 @@ int seq[16] = {
   B00100111, B00101011, B00101101, B00101110,
   B00011110, B00011101, B00011011, B00010111
 };
-  
+
+/*
+Define alphabet here
+*/
+
+/*
+void display(String word) {
+  for (int i = 0; i < word.length(); i++) {
+    digitalWrite(LATCH, LOW);
+    shiftOut(SER, CLK, LSBFIRST, /* letter */);
+    digitalWrite(LATCH, HIGH);
+  }
+}
+*/
 
 void setup() {
   pinMode(SER, OUTPUT);
