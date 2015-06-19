@@ -106,6 +106,21 @@ void clearDataArray(int *data) {
   data[2] = 0;
 }
 
+// Pushes single letter of alphabet or alphabet-related symbols
+// onto data array - helper function to getData
+void pushAlpha(byte letter, int *data, int *count, int *reg) {
+  data[*reg] = data[*reg] | letter >> (*count % 8);
+  if (*count % 8 + ALPHA_WIDTH + 1 >= 8) {
+    (*reg)++;
+    if (*reg > 2) return;
+    if (*count % 8 + ALPHA_WIDTH > 8) {
+      data[*reg] = data[*reg] | letter << (8 - *count % 8);
+    }
+  }
+  *count += ALPHA_WIDTH;
+  (*count)++;
+}
+
 // Prepares data to contain integers that will be pushed
 // onto shift registers to display column data for a given row
 void getData(String text, int *data, int row) {
@@ -113,21 +128,13 @@ void getData(String text, int *data, int row) {
   int reg = 0;
   clearDataArray(data);
   for (int i = 0; i < text.length(); i++) {
+    if (reg > 2) return;
     switch(text[i]) {
       case 'A':
-        data[reg] = data[reg] | SYM_A[row] >> (count % 8);
-        if (count % 8 + ALPHA_WIDTH >= 8) {
-          reg++;
-          if (reg > 2) return;
-          if (count % 8 + ALPHA_WIDTH > 8) {
-            data[reg] = data[reg] | SYM_A[row] << (8 - count % 8);
-          }
-        }
-        count += ALPHA_WIDTH;
-        count++;
+        pushAlpha(SYM_A[row], data, &count, &reg);
         break;
       case 'B':
-        count += ALPHA_WIDTH;
+        pushAlpha(SYM_B[row], data, &count, &reg);
         break;
     }
   }
@@ -155,8 +162,9 @@ void setup() {
   pinMode(SER, OUTPUT);
   pinMode(LATCH, OUTPUT);
   pinMode(CLK, OUTPUT);
+  Serial.begin(9600);
 }
 
 void loop() {
-  displayText("AAAA", 0);
+  displayText("babab", 0);
 }
