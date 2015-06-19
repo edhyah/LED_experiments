@@ -93,22 +93,70 @@ const byte SYM_9[] = {B11110000, B10010000, B10010000, B11110000, B00010000, \
 const byte SYM_COLON[] = {0, B01100000, B01100000, 0, 0, B01100000, \
   B01100000, 0};
 
+void getData2(String text, int *data, int row) {
+  data[0] = B11111111;
+  data[1] = B11111111;
+  data[2] = B11111111;
+}
+
+// Sets all elements in data to 0
+void clearDataArray(int *data) {
+  data[0] = 0;
+  data[1] = 0;
+  data[2] = 0;
+}
+
+// Prepares data to contain integers that will be pushed
+// onto shift registers to display column data for a given row
+void getData(String text, int *data, int row) {
+  int count = 0;
+  int reg = 0;
+  clearDataArray(data);
+  for (int i = 0; i < text.length(); i++) {
+    switch(text[i]) {
+      case 'A':
+        data[reg] = data[reg] | SYM_A[row] >> (count % 8);
+        if (count % 8 + ALPHA_WIDTH >= 8) {
+          reg++;
+          if (reg > 2) return;
+          if (count % 8 + ALPHA_WIDTH > 8) {
+            data[reg] = data[reg] | SYM_A[row] << (8 - count % 8);
+          }
+        }
+        count += ALPHA_WIDTH;
+        count++;
+        break;
+      case 'B':
+        count += ALPHA_WIDTH;
+        break;
+    }
+  }
+  return;
+}
+
+// Displays text onto matrix
+void displayText(String text, int shift) {
+  int data[3];
+  int shiftDelay = 5;
+  text.toUpperCase();
+  for (int row = 0; row < 8; row++) {
+    getData(text, data, row);
+    digitalWrite(LATCH, LOW);
+    shiftOut(SER, CLK, LSBFIRST, ~data[2]);
+    shiftOut(SER, CLK, LSBFIRST, ~data[1]);
+    shiftOut(SER, CLK, LSBFIRST, ~data[0]);
+    shiftOut(SER, CLK, MSBFIRST, ROWS[row]);
+    digitalWrite(LATCH, HIGH);
+    delay(1);
+  }
+}
 
 void setup() {
   pinMode(SER, OUTPUT);
   pinMode(LATCH, OUTPUT);
   pinMode(CLK, OUTPUT);
-  //Serial.begin(9600);
 }
 
 void loop() {
-  for (int row = 0; row < 8; row++) {
-    digitalWrite(LATCH, LOW);
-    shiftOut(SER, CLK, LSBFIRST, B11111111);
-    shiftOut(SER, CLK, LSBFIRST, B11111111);
-    shiftOut(SER, CLK, LSBFIRST, ~SYM_9[row]);
-    shiftOut(SER, CLK, MSBFIRST, ROWS[row]);
-    digitalWrite(LATCH, HIGH);
-    delay(1);
-  }
+  displayText("AAAA", 0);
 }
