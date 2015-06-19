@@ -69,6 +69,8 @@ const byte SYM_Z[] = {B11111000, B00001000, B00010000, B00100000, B01000000, \
 const byte SYM_QUERY[] = {B01110000, B10001000, B10001000, B00010000, \
   B00100000, B00100000, 0, B00100000};
 const byte SYM_PER[] = {0, 0, 0, 0, 0, 0, 0, B01000000};
+const byte SYM_EXC[] = {B00100000, B00100000, B00100000, B00100000, \
+  B00100000, B00100000, 0, B00100000};
 
 // Number and Number-Related Symbols
 const int NUM_WIDTH = 4;
@@ -136,6 +138,87 @@ void getData(String text, int *data, int row) {
       case 'B':
         pushAlpha(SYM_B[row], data, &count, &reg);
         break;
+      case 'C':
+        pushAlpha(SYM_C[row], data, &count, &reg);
+        break;
+      case 'D':
+        pushAlpha(SYM_D[row], data, &count, &reg);
+        break;
+      case 'E':
+        pushAlpha(SYM_E[row], data, &count, &reg);
+        break;
+      case 'F':
+        pushAlpha(SYM_F[row], data, &count, &reg);
+        break;
+      case 'G':
+        pushAlpha(SYM_G[row], data, &count, &reg);
+        break;
+      case 'H':
+        pushAlpha(SYM_H[row], data, &count, &reg);
+        break;
+      case 'I':
+        pushAlpha(SYM_I[row], data, &count, &reg);
+        break;
+      case 'J':
+        pushAlpha(SYM_J[row], data, &count, &reg);
+        break;
+      case 'K':
+        pushAlpha(SYM_K[row], data, &count, &reg);
+        break;
+      case 'L':
+        pushAlpha(SYM_L[row], data, &count, &reg);
+        break;
+      case 'M':
+        pushAlpha(SYM_M[row], data, &count, &reg);
+        break;
+      case 'N':
+        pushAlpha(SYM_N[row], data, &count, &reg);
+        break;
+      case 'O':
+        pushAlpha(SYM_O[row], data, &count, &reg);
+        break;
+      case 'P':
+        pushAlpha(SYM_P[row], data, &count, &reg);
+        break;
+      case 'Q':
+        pushAlpha(SYM_Q[row], data, &count, &reg);
+        break;
+      case 'R':
+        pushAlpha(SYM_R[row], data, &count, &reg);
+        break;
+      case 'S':
+        pushAlpha(SYM_S[row], data, &count, &reg);
+        break;
+      case 'T':
+        pushAlpha(SYM_T[row], data, &count, &reg);
+        break;
+      case 'U':
+        pushAlpha(SYM_U[row], data, &count, &reg);
+        break;
+      case 'V':
+        pushAlpha(SYM_V[row], data, &count, &reg);
+        break;
+      case 'W':
+        pushAlpha(SYM_W[row], data, &count, &reg);
+        break;
+      case 'X':
+        pushAlpha(SYM_X[row], data, &count, &reg);
+        break;
+      case 'Y':
+        pushAlpha(SYM_Y[row], data, &count, &reg);
+        break;
+      case 'Z':
+        pushAlpha(SYM_Z[row], data, &count, &reg);
+        break;
+      case '?':
+        pushAlpha(SYM_QUERY[row], data, &count, &reg);
+        break;
+      case '.':
+        pushAlpha(SYM_PER[row], data, &count, &reg);
+        break;
+      case '!':
+        pushAlpha(SYM_EXC[row], data, &count, &reg);
+        break;
     }
   }
   return;
@@ -162,9 +245,8 @@ void setup() {
   pinMode(SER, OUTPUT);
   pinMode(LATCH, OUTPUT);
   pinMode(CLK, OUTPUT);
-  Serial.begin(9600);
 }
 
 void loop() {
-  displayText("babab", 0);
+  displayText("mom!", 0);
 }
