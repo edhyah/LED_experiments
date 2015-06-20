@@ -111,6 +111,30 @@ void clearDataArray(int *data) {
 // Pushes single letter of alphabet or 5-bit width symbols
 // onto data array - helper function to getData
 void pushAlpha(byte letter, int *data, int *count, int *reg) {
+  int width = ALPHA_WIDTH;
+  if (count < 0) {
+    if (-*count > ALPHA_WIDTH) {
+      *count += ALPHA_WIDTH;
+      return;
+    } else {
+      letter << -(*count);
+      width -= -(*count);
+      *count = 0;
+    }
+  }
+  data[*reg] = data[*reg] | letter >> (*count % 8);
+  if (*count % 8 + ALPHA_WIDTH + 1 >= 8) {
+    (*reg)++;
+    if (*reg > 2) return;
+    if (*count % 8 + ALPHA_WIDTH > 8) {
+      data[*reg] = data[*reg] | letter << (8 - *count % 8);
+    }
+  }
+  *count += width;
+  (*count)++;
+  
+  // code that works
+  /*
   data[*reg] = data[*reg] | letter >> (*count % 8);
   if (*count % 8 + ALPHA_WIDTH + 1 >= 8) {
     (*reg)++;
@@ -121,6 +145,7 @@ void pushAlpha(byte letter, int *data, int *count, int *reg) {
   }
   *count += ALPHA_WIDTH;
   (*count)++;
+  */
 }
 
 // Pushes single number or 2-bit width symbols onto
@@ -155,9 +180,16 @@ void pushMisc(byte chr, int *data, int *count, int *reg) {
 
 // Prepares data to contain integers that will be pushed
 // onto shift registers to display column data for a given row
-void getData(String text, int *data, int row) {
+void getData(String text, int *data, int row, int shift) {
   int count = 0;
   int reg = 0;
+  if (shift < 24) {
+    count = 24 - shift - 1;
+    if (shift < 8) reg = 2;
+    else if (shift < 16) reg = 1;
+  } else {
+    count = shift - 24 - 1;
+  }
   clearDataArray(data);
   for (int i = 0; i < text.length(); i++) {
     if (reg > 2) return;
@@ -293,10 +325,9 @@ void getData(String text, int *data, int row) {
 // Displays text onto matrix
 void displayText(String text, int shift) {
   int data[3];
-  int shiftDelay = 5;
   text.toUpperCase();
   for (int row = 0; row < 8; row++) {
-    getData(text, data, row);
+    getData(text, data, row, shift);
     digitalWrite(LATCH, LOW);
     shiftOut(SER, CLK, LSBFIRST, ~data[2]);
     shiftOut(SER, CLK, LSBFIRST, ~data[1]);
@@ -314,5 +345,13 @@ void setup() {
 }
 
 void loop() {
-  displayText("12:59", 0);
+  String text = "HelloWorld";
+  unsigned long time;
+  //displayText(text, 0);
+  int total = 24 + text.length();
+  //int total = 24;
+  for (int i = 0; i < total; i++) {
+    time = millis();
+    while (millis() - time < 50) displayText(text, i);
+  }
 }
