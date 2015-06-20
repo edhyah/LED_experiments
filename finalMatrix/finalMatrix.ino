@@ -327,8 +327,8 @@ void getData(String text, int *data, int row, int shift) {
   return;
 }
 
-// Displays text onto matrix
-void displayText(String text, int shift) {
+// Draws text onto matrix at given shift
+void drawText(String text, int shift) {
   int data[3];
   text.toUpperCase();
   for (int row = 0; row < 8; row++) {
@@ -343,20 +343,29 @@ void displayText(String text, int shift) {
   }
 }
 
+// Displays text with or without scrolling animation
+void displayText(String text, boolean scrollIsOn) {
+  if (!scrollIsOn) drawText(text, 23);
+  else {
+    unsigned long time;
+    int timeDelay = 35;
+    int cycleLength = 6 * text.length() + 40;
+    for (int i = 0; i < cycleLength; i++) {
+      time = millis();
+      while (millis() - time < timeDelay) drawText(text, i);
+    }
+  }
+}
+
+// Arduino-required setup function
 void setup() {
   pinMode(SER, OUTPUT);
   pinMode(LATCH, OUTPUT);
   pinMode(CLK, OUTPUT);
 }
 
+// Arduino-required loop function
 void loop() {
-  String text = "Good night Daniel!";
-  //String text = "Hello my name is Edward Ahn!";
-  unsigned long time;
-  // find optimal total
-  int total = 8 * text.length();
-  for (int i = 0; i < total; i++) {
-    time = millis();
-    while (millis() - time < 30) displayText(text, i);
-  }
+  String text = "Good morning Mom and hope you have a nice day!";
+  displayText(text, true);
 }
