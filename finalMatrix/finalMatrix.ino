@@ -74,8 +74,8 @@ const byte SYM_EXC[] = {B00100000, B00100000, B00100000, B00100000, \
 
 // Numbers and 4-Bit Width Symbols
 const int NUM_WIDTH = 4;
-const byte SYM_0[] = {B01110000, B10001000, B10001000, B10001000, B10001000, \
-  B10001000, B10001000, B01110000};
+const byte SYM_0[] = {B01100000, B10010000, B10010000, B10110000, B11010000, \
+  B10010000, B10010000, B01100000};
 const byte SYM_1[] = {B00100000, B00100000, B00100000, B00100000, B00100000, \
   B00100000, B00100000, B00100000};
 const byte SYM_2[] = {B11110000, B00010000, B00010000, B11110000, B10000000, \
@@ -112,13 +112,13 @@ void clearDataArray(int *data) {
 // onto data array - helper function to getData
 void pushAlpha(byte letter, int *data, int *count, int *reg) {
   int width = ALPHA_WIDTH;
-  if (count < 0) {
-    if (-*count > ALPHA_WIDTH) {
-      *count += ALPHA_WIDTH;
+  if (*count < 0) {
+    if (-(*count) >= ALPHA_WIDTH) {
+      *count += ALPHA_WIDTH + 1;
       return;
     } else {
-      letter << -(*count);
-      width -= -(*count);
+      letter = letter << -(*count);
+      width += *count;
       *count = 0;
     }
   }
@@ -132,25 +132,22 @@ void pushAlpha(byte letter, int *data, int *count, int *reg) {
   }
   *count += width;
   (*count)++;
-  
-  // code that works
-  /*
-  data[*reg] = data[*reg] | letter >> (*count % 8);
-  if (*count % 8 + ALPHA_WIDTH + 1 >= 8) {
-    (*reg)++;
-    if (*reg > 2) return;
-    if (*count % 8 + ALPHA_WIDTH > 8) {
-      data[*reg] = data[*reg] | letter << (8 - *count % 8);
-    }
-  }
-  *count += ALPHA_WIDTH;
-  (*count)++;
-  */
 }
 
 // Pushes single number or 2-bit width symbols onto
 // data array - helper function to getData
 void pushNum(byte number, int *data, int *count, int *reg) {
+  int width = NUM_WIDTH;
+  if (*count < 0) {
+    if (-(*count) >= NUM_WIDTH) {
+      *count += NUM_WIDTH + 1;
+      return;
+    } else {
+      number = number << -(*count);
+      width += *count;
+      *count = 0;
+    }
+  }
   data[*reg] = data[*reg] | number >> (*count % 8);
   if (*count % 8 + NUM_WIDTH + 1 >= 8) {
     (*reg)++;
@@ -159,13 +156,24 @@ void pushNum(byte number, int *data, int *count, int *reg) {
       data[*reg] = data[*reg] | number << (8 - *count % 8);
     }
   }
-  *count += NUM_WIDTH;
+  *count += width;
   (*count)++;
 }
 
 // Pushes miscellanceous character onto data
 // array - helper function to getData
 void pushMisc(byte chr, int *data, int *count, int *reg) {
+  int width = MISC_WIDTH;
+  if (*count < 0) {
+    if (-(*count) >= MISC_WIDTH) {
+      *count += MISC_WIDTH + 1;
+      return;
+    } else {
+      chr = chr << -(*count);
+      width += *count;
+      *count = 0;
+    }
+  }
   data[*reg] = data[*reg] | chr >> (*count % 8);
   if (*count % 8 + MISC_WIDTH + 1 >= 8) {
     (*reg)++;
@@ -174,21 +182,18 @@ void pushMisc(byte chr, int *data, int *count, int *reg) {
       data[*reg] = data[*reg] | chr << (8 - *count % 8);
     }
   }
-  *count += MISC_WIDTH;
+  *count += width;
   (*count)++;
 }
 
 // Prepares data to contain integers that will be pushed
 // onto shift registers to display column data for a given row
 void getData(String text, int *data, int row, int shift) {
-  int count = 0;
+  int count = 24 - shift - 1;
   int reg = 0;
   if (shift < 24) {
-    count = 24 - shift - 1;
     if (shift < 8) reg = 2;
     else if (shift < 16) reg = 1;
-  } else {
-    count = shift - 24 - 1;
   }
   clearDataArray(data);
   for (int i = 0; i < text.length(); i++) {
@@ -345,13 +350,13 @@ void setup() {
 }
 
 void loop() {
-  String text = "HelloWorld";
+  String text = "Good night Daniel!";
+  //String text = "Hello my name is Edward Ahn!";
   unsigned long time;
-  //displayText(text, 0);
-  int total = 24 + text.length();
-  //int total = 24;
+  // find optimal total
+  int total = 8 * text.length();
   for (int i = 0; i < total; i++) {
     time = millis();
-    while (millis() - time < 50) displayText(text, i);
+    while (millis() - time < 30) displayText(text, i);
   }
 }
