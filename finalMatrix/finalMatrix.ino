@@ -1,6 +1,6 @@
 /*
- * Final 24x8 LED Matrix Code
- * by Edward Ahn 2015
+ * 24x8 LED Matrix Code
+ * Copyright 2015 Edward Ahn.
  *
  */
  
@@ -12,7 +12,7 @@ const int CLK = 10;
 // Row Values
 const int ROWS[] = {1, 2, 4, 8, 16, 32, 64, 128};
 
-// Alphabet and Alphabet-Related Symbols
+// Alphabet and 5-Bit Width Symbols
 const int ALPHA_WIDTH = 5;
 const byte SYM_A[] = {B01110000, B10001000, B10001000, B10001000, B11111000, \
   B10001000, B10001000, B10001000};
@@ -72,8 +72,10 @@ const byte SYM_PER[] = {0, 0, 0, 0, 0, 0, 0, B01000000};
 const byte SYM_EXC[] = {B00100000, B00100000, B00100000, B00100000, \
   B00100000, B00100000, 0, B00100000};
 
-// Number and Number-Related Symbols
+// Numbers and 4-Bit Width Symbols
 const int NUM_WIDTH = 4;
+const byte SYM_0[] = {B01110000, B10001000, B10001000, B10001000, B10001000, \
+  B10001000, B10001000, B01110000};
 const byte SYM_1[] = {B00100000, B00100000, B00100000, B00100000, B00100000, \
   B00100000, B00100000, B00100000};
 const byte SYM_2[] = {B11110000, B00010000, B00010000, B11110000, B10000000, \
@@ -92,14 +94,12 @@ const byte SYM_8[] = {B11110000, B10010000, B10010000, B11110000, B10010000, \
   B10010000, B10010000, B11110000};
 const byte SYM_9[] = {B11110000, B10010000, B10010000, B11110000, B00010000, \
   B00010000, B00010000, B11110000};
-const byte SYM_COLON[] = {0, B01100000, B01100000, 0, 0, B01100000, \
-  B01100000, 0};
+const byte SYM_SPACE[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-void getData2(String text, int *data, int row) {
-  data[0] = B11111111;
-  data[1] = B11111111;
-  data[2] = B11111111;
-}
+// Miscellaneous 2-Bit Width Symbols
+const int MISC_WIDTH = 2;
+const byte SYM_COLON[] = {0, B11000000, B11000000, 0, 0, B11000000, \
+  B11000000, 0};
 
 // Sets all elements in data to 0
 void clearDataArray(int *data) {
@@ -108,7 +108,7 @@ void clearDataArray(int *data) {
   data[2] = 0;
 }
 
-// Pushes single letter of alphabet or alphabet-related symbols
+// Pushes single letter of alphabet or 5-bit width symbols
 // onto data array - helper function to getData
 void pushAlpha(byte letter, int *data, int *count, int *reg) {
   data[*reg] = data[*reg] | letter >> (*count % 8);
@@ -120,6 +120,36 @@ void pushAlpha(byte letter, int *data, int *count, int *reg) {
     }
   }
   *count += ALPHA_WIDTH;
+  (*count)++;
+}
+
+// Pushes single number or 2-bit width symbols onto
+// data array - helper function to getData
+void pushNum(byte number, int *data, int *count, int *reg) {
+  data[*reg] = data[*reg] | number >> (*count % 8);
+  if (*count % 8 + NUM_WIDTH + 1 >= 8) {
+    (*reg)++;
+    if (*reg > 2) return;
+    if (*count % 8 + NUM_WIDTH > 8) {
+      data[*reg] = data[*reg] | number << (8 - *count % 8);
+    }
+  }
+  *count += NUM_WIDTH;
+  (*count)++;
+}
+
+// Pushes miscellanceous character onto data
+// array - helper function to getData
+void pushMisc(byte chr, int *data, int *count, int *reg) {
+  data[*reg] = data[*reg] | chr >> (*count % 8);
+  if (*count % 8 + MISC_WIDTH + 1 >= 8) {
+    (*reg)++;
+    if (*reg > 2) return;
+    if (*count % 8 + MISC_WIDTH > 8) {
+      data[*reg] = data[*reg] | chr << (8 - *count % 8);
+    }
+  }
+  *count += MISC_WIDTH;
   (*count)++;
 }
 
@@ -219,6 +249,42 @@ void getData(String text, int *data, int row) {
       case '!':
         pushAlpha(SYM_EXC[row], data, &count, &reg);
         break;
+      case '0':
+        pushNum(SYM_0[row], data, &count, &reg);
+        break;
+      case '1':
+        pushNum(SYM_1[row], data, &count, &reg);
+        break;
+      case '2':
+        pushNum(SYM_2[row], data, &count, &reg);
+        break;
+      case '3':
+        pushNum(SYM_3[row], data, &count, &reg);
+        break;
+      case '4':
+        pushNum(SYM_4[row], data, &count, &reg);
+        break;
+      case '5':
+        pushNum(SYM_5[row], data, &count, &reg);
+        break;
+      case '6':
+        pushNum(SYM_6[row], data, &count, &reg);
+        break;
+      case '7':
+        pushNum(SYM_7[row], data, &count, &reg);
+        break;
+      case '8':
+        pushNum(SYM_8[row], data, &count, &reg);
+        break;
+      case '9':
+        pushNum(SYM_9[row], data, &count, &reg);
+        break;
+      case ' ':
+        pushNum(SYM_SPACE[row], data, &count, &reg);
+        break;
+      case ':':
+        pushMisc(SYM_COLON[row], data, &count, &reg);
+        break;
     }
   }
   return;
@@ -248,5 +314,5 @@ void setup() {
 }
 
 void loop() {
-  displayText("mom!", 0);
+  displayText("12:59", 0);
 }
