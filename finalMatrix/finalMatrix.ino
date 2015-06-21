@@ -362,10 +362,15 @@ void setup() {
   pinMode(SER, OUTPUT);
   pinMode(LATCH, OUTPUT);
   pinMode(CLK, OUTPUT);
+  Serial.begin(9600);
 }
 
 // Arduino-required loop function
 void loop() {
-  String text = "Good morning Mom and hope you have a nice day!";
+  String text = "";
+  while (Serial.available() > 0) {
+    char data = Serial.read();
+    text += data;
+  }
   displayText(text, true);
 }
