@@ -369,8 +369,7 @@ void setup() {
 void loop() {
   String text = "";
   while (Serial.available() > 0) {
-    char data = Serial.read();
-    text += data;
+    text += char(Serial.read());
   }
   displayText(text, true);
 }
