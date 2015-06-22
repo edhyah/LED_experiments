@@ -32,6 +32,8 @@ Procedures:
 11) Connect the Vcc and ground pins together.
 12) Solder a 5-pin header to the board that will allow wires to connect to Vcc, ground, and the three data lines (data, clock, and latch).
 
-Notes:
-- schematic.jpg can be used for wiring assistance for the LEDs, but note that this schematic is for a 4x4 matrix
-- video
+Notes on using the resources (res) folder:
+- schematic.jpg can be used for wiring assistance for the LEDs, but note that this schematic is for a 4x4 matrix (so it is useless in helping you wire the matrix with shift registers)
+- the jpegs visually show how I built my matrix
+- video.3gp helps provide more detail in how my matrix was designed
+- datasheet for the 74HC595 is provided
