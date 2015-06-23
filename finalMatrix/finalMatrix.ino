@@ -3,7 +3,7 @@
  * Copyright 2015 Edward Ahn.
  *
  */
- 
+ // TODO: ADD SYMBOLS @#$%^&*()-+=_[]{}\/"'<>,;~
 // Arduino Pins
 const int SER = 8;
 const int LATCH = 9;
