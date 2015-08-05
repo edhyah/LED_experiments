@@ -1,6 +1,9 @@
 Final LED Matrix
 (24x8 matrix)
 
+Purpose:
+To build a 24x8 LED matrix that can display strings received serially.
+
 Materials:
 192 LEDs
 24 330 ohm resistors
@@ -31,6 +34,9 @@ Procedures:
 10) Daisy-chain the shift registers together (google this if daisy-chaining is an unfamiliar term).
 11) Connect the Vcc and ground pins together.
 12) Solder a 5-pin header to the board that will allow wires to connect to Vcc, ground, and the three data lines (data, clock, and latch).
+13) Connect the pins to the corresponding pins on an Arduino Uno.
+14) Load the code provided in the current directory to the Arduino.
+15) Send data serially (Bluetooth or serial cable) and watch the strings appear visually!
 
 Notes on using the resources (res) folder:
 - schematic.jpg can be used for wiring assistance for the LEDs, but note that this schematic is for a 4x4 matrix (so it is useless in helping you wire the matrix with shift registers)

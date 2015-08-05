@@ -3,7 +3,16 @@
  * Copyright 2015 Edward Ahn.
  *
  */
- // TODO: ADD SYMBOLS @#$%^&*()-+=_[]{}\/"'<>,;~
+
+// String read from serial
+String text = "";
+
+// String that will be displayed on matrix
+String cText = "";
+
+// Position of leftmost character on matrix
+int pos = 0;
+
 // Arduino Pins
 const int SER = 8;
 const int LATCH = 9;
@@ -147,347 +156,390 @@ const byte SYM_COMMA[] = {0, 0, 0, 0, 0, 0, B11000000, B01000000};
 const byte SYM_PIPE[] = {0, B01000000, B01000000, B01000000, \
   B01000000, B01000000, B01000000, 0};
 
-// Sets all elements in data to 0
+// Sets all elements in data array to 0
 void clearDataArray(int *data) {
   data[0] = 0;
   data[1] = 0;
   data[2] = 0;
 }
 
-// Pushes single letter of alphabet or 5-bit width symbols
-// onto data array - helper function to getData
-void pushAlpha(byte letter, int *data, int *count, int *reg) {
+// Pushes letter onto data array
+// Returns true if cText is truncated
+boolean pushAlpha(byte letter, int *data, int *count, int *reg) {
   int width = ALPHA_WIDTH;
-  if (*count < 0) {
-    if (-(*count) >= ALPHA_WIDTH) {
-      *count += ALPHA_WIDTH + 1;
-      return;
+  // process letters that are not displayed or partially displayed on matrix
+  if (pos < 0 && *count == 0) {
+    if (-pos > ALPHA_WIDTH) {
+      pos += ALPHA_WIDTH + 1;
+      cText = cText.substring(1);
+      return true;
     } else {
-      letter = letter << -(*count);
-      width += *count;
-      *count = 0;
+      letter = letter << -pos;
+      width += pos;
     }
   }
+  // push letter onto data array
   data[*reg] = data[*reg] | letter >> (*count % 8);
   if (*count % 8 + ALPHA_WIDTH + 1 >= 8) {
     (*reg)++;
-    if (*reg > 2) return;
+    if (*reg > 2) return false;
     if (*count % 8 + ALPHA_WIDTH > 8) {
       data[*reg] = data[*reg] | letter << (8 - *count % 8);
     }
   }
   *count += width;
   (*count)++;
+  return false;
 }
 
-// Pushes single number or 2-bit width symbols onto
-// data array - helper function to getData
-void pushNum(byte number, int *data, int *count, int *reg) {
+// Pushes number onto data array
+// Returns true if cText is truncated
+boolean pushNum(byte number, int *data, int *count, int *reg) {
   int width = NUM_WIDTH;
-  if (*count < 0) {
-    if (-(*count) >= NUM_WIDTH) {
-      *count += NUM_WIDTH + 1;
-      return;
+  // process numbers that are not displayed or partially displayed on matrix
+  if (pos < 0 && *count == 0) {
+    if (-pos > NUM_WIDTH) {
+      pos += NUM_WIDTH + 1;
+      cText = cText.substring(1);
+      return true;
     } else {
-      number = number << -(*count);
-      width += *count;
-      *count = 0;
+      number = number << -pos;
+      width += pos;
     }
   }
+  // push number onto data array
   data[*reg] = data[*reg] | number >> (*count % 8);
   if (*count % 8 + NUM_WIDTH + 1 >= 8) {
     (*reg)++;
-    if (*reg > 2) return;
+    if (*reg > 2) return false;
     if (*count % 8 + NUM_WIDTH > 8) {
       data[*reg] = data[*reg] | number << (8 - *count % 8);
     }
   }
   *count += width;
   (*count)++;
+  return false;
 }
 
-// Pushes miscellanceous character onto data
-// array - helper function to getData
-void pushMisc(byte chr, int *data, int *count, int *reg) {
+// Pushes character onto data array
+// Returns true if cText is truncated
+boolean pushMisc(byte chr, int *data, int *count, int *reg) {
   int width = MISC_WIDTH;
-  if (*count < 0) {
-    if (-(*count) >= MISC_WIDTH) {
-      *count += MISC_WIDTH + 1;
-      return;
+  // process characters that are not displayed or partially displayed on matrix
+  if (pos < 0 && *count == 0) {
+    if (-pos > MISC_WIDTH) {
+      pos += MISC_WIDTH + 1;
+      cText = cText.substring(1);
+      return true;
     } else {
-      chr = chr << -(*count);
-      width += *count;
-      *count = 0;
+      chr = chr << -pos;
+      width += pos;
     }
   }
+  // push character onto data array
   data[*reg] = data[*reg] | chr >> (*count % 8);
   if (*count % 8 + MISC_WIDTH + 1 >= 8) {
     (*reg)++;
-    if (*reg > 2) return;
+    if (*reg > 2) return false;
     if (*count % 8 + MISC_WIDTH > 8) {
       data[*reg] = data[*reg] | chr << (8 - *count % 8);
     }
   }
   *count += width;
   (*count)++;
+  return false;
 }
 
-// Prepares data to contain integers that will be pushed
-// onto shift registers to display column data for a given row
-void getData(String text, int *data, int row, int shift) {
-  int count = 24 - shift - 1;
-  int reg = 0;
+// Loads (three) integers onto data array
+// i.e. loads array with info on which LEDs will be lighted per row
+void getData(int *data, int row, int shift) {
+  int count = (shift < 23 ? pos : 0); // points to columns in matrix
+  int reg = 0; // register
   if (shift < 24) {
     if (shift < 8) reg = 2;
     else if (shift < 16) reg = 1;
   }
   clearDataArray(data);
-  for (int i = 0; i < text.length(); i++) {
+  for (int i = 0; i < cText.length(); i++) {
     if (reg > 2) return;
-    switch(text[i]) {
+    switch(cText[i]) {
       case 'A':
-        pushAlpha(SYM_A[row], data, &count, &reg);
+        if (pushAlpha(SYM_A[row], data, &count, &reg)) i--;
         break;
       case 'B':
-        pushAlpha(SYM_B[row], data, &count, &reg);
+        if (pushAlpha(SYM_B[row], data, &count, &reg)) i--;
         break;
       case 'C':
-        pushAlpha(SYM_C[row], data, &count, &reg);
+        if (pushAlpha(SYM_C[row], data, &count, &reg)) i--;
         break;
       case 'D':
-        pushAlpha(SYM_D[row], data, &count, &reg);
+        if (pushAlpha(SYM_D[row], data, &count, &reg)) i--;
         break;
       case 'E':
-        pushAlpha(SYM_E[row], data, &count, &reg);
+        if (pushAlpha(SYM_E[row], data, &count, &reg)) i--;
         break;
       case 'F':
-        pushAlpha(SYM_F[row], data, &count, &reg);
+        if (pushAlpha(SYM_F[row], data, &count, &reg)) i--;
         break;
       case 'G':
-        pushAlpha(SYM_G[row], data, &count, &reg);
+        if (pushAlpha(SYM_G[row], data, &count, &reg)) i--;
         break;
       case 'H':
-        pushAlpha(SYM_H[row], data, &count, &reg);
+        if (pushAlpha(SYM_H[row], data, &count, &reg)) i--;
         break;
       case 'I':
-        pushAlpha(SYM_I[row], data, &count, &reg);
+        if (pushAlpha(SYM_I[row], data, &count, &reg)) i--;
         break;
       case 'J':
-        pushAlpha(SYM_J[row], data, &count, &reg);
+        if (pushAlpha(SYM_J[row], data, &count, &reg)) i--;
         break;
       case 'K':
-        pushAlpha(SYM_K[row], data, &count, &reg);
+        if (pushAlpha(SYM_K[row], data, &count, &reg)) i--;
         break;
       case 'L':
-        pushAlpha(SYM_L[row], data, &count, &reg);
+        if (pushAlpha(SYM_L[row], data, &count, &reg)) i--;
         break;
       case 'M':
-        pushAlpha(SYM_M[row], data, &count, &reg);
+        if (pushAlpha(SYM_M[row], data, &count, &reg)) i--;
         break;
       case 'N':
-        pushAlpha(SYM_N[row], data, &count, &reg);
+        if (pushAlpha(SYM_N[row], data, &count, &reg)) i--;
         break;
       case 'O':
-        pushAlpha(SYM_O[row], data, &count, &reg);
+        if (pushAlpha(SYM_O[row], data, &count, &reg)) i--;
         break;
       case 'P':
-        pushAlpha(SYM_P[row], data, &count, &reg);
+        if (pushAlpha(SYM_P[row], data, &count, &reg)) i--;
         break;
       case 'Q':
-        pushAlpha(SYM_Q[row], data, &count, &reg);
+        if (pushAlpha(SYM_Q[row], data, &count, &reg)) i--;
         break;
       case 'R':
-        pushAlpha(SYM_R[row], data, &count, &reg);
+        if (pushAlpha(SYM_R[row], data, &count, &reg)) i--;
         break;
       case 'S':
-        pushAlpha(SYM_S[row], data, &count, &reg);
+        if (pushAlpha(SYM_S[row], data, &count, &reg)) i--;
         break;
       case 'T':
-        pushAlpha(SYM_T[row], data, &count, &reg);
+        if (pushAlpha(SYM_T[row], data, &count, &reg)) i--;
         break;
       case 'U':
-        pushAlpha(SYM_U[row], data, &count, &reg);
+        if (pushAlpha(SYM_U[row], data, &count, &reg)) i--;
         break;
       case 'V':
-        pushAlpha(SYM_V[row], data, &count, &reg);
+        if (pushAlpha(SYM_V[row], data, &count, &reg)) i--;
         break;
       case 'W':
-        pushAlpha(SYM_W[row], data, &count, &reg);
+        if (pushAlpha(SYM_W[row], data, &count, &reg)) i--;
         break;
       case 'X':
-        pushAlpha(SYM_X[row], data, &count, &reg);
+        if (pushAlpha(SYM_X[row], data, &count, &reg)) i--;
         break;
       case 'Y':
-        pushAlpha(SYM_Y[row], data, &count, &reg);
+        if (pushAlpha(SYM_Y[row], data, &count, &reg)) i--;
         break;
       case 'Z':
-        pushAlpha(SYM_Z[row], data, &count, &reg);
+        if (pushAlpha(SYM_Z[row], data, &count, &reg)) i--;
         break;
       case '?':
-        pushAlpha(SYM_QUERY[row], data, &count, &reg);
+        if (pushAlpha(SYM_QUERY[row], data, &count, &reg)) i--;
         break;
       case '!':
-        pushAlpha(SYM_EXC[row], data, &count, &reg);
+        if (pushAlpha(SYM_EXC[row], data, &count, &reg)) i--;
         break;
       case '$':
-        pushAlpha(SYM_DOL[row], data, &count, &reg);
+        if (pushAlpha(SYM_DOL[row], data, &count, &reg)) i--;
         break;
       case '@':
-        pushAlpha(SYM_AT[row], data, &count, &reg);
+        if (pushAlpha(SYM_AT[row], data, &count, &reg)) i--;
         break;
       case '#':
-        pushAlpha(SYM_POUND[row], data, &count, &reg);
+        if (pushAlpha(SYM_POUND[row], data, &count, &reg)) i--;
         break;
       case '%':
-        pushAlpha(SYM_PRCNT[row], data, &count, &reg);
+        if (pushAlpha(SYM_PRCNT[row], data, &count, &reg)) i--;
         break;
       case '^':
-        pushAlpha(SYM_CARET[row], data, &count, &reg);
+        if (pushAlpha(SYM_CARET[row], data, &count, &reg)) i--;
         break;
       case '&':
-        pushAlpha(SYM_AMP[row], data, &count, &reg);
+        if (pushAlpha(SYM_AMP[row], data, &count, &reg)) i--;
         break;
       case '*':
-        pushAlpha(SYM_AST[row], data, &count, &reg);
+        if (pushAlpha(SYM_AST[row], data, &count, &reg)) i--;
         break;
       case '~':
-        pushAlpha(SYM_TILDE[row], data, &count, &reg);
+        if (pushAlpha(SYM_TILDE[row], data, &count, &reg)) i--;
         break;
       case '+':
-        pushAlpha(SYM_PLUS[row], data, &count, &reg);
+        if (pushAlpha(SYM_PLUS[row], data, &count, &reg)) i--;
         break;
       case '_':
-        pushAlpha(SYM_UNDSC[row], data, &count, &reg);
+        if (pushAlpha(SYM_UNDSC[row], data, &count, &reg)) i--;
         break;
       case '/':
-        pushAlpha(SYM_SLASH[row], data, &count, &reg);
+        if (pushAlpha(SYM_SLASH[row], data, &count, &reg)) i--;
         break;
       case '\\':
-        pushAlpha(SYM_BKSLASH[row], data, &count, &reg);
+        if (pushAlpha(SYM_BKSLASH[row], data, &count, &reg)) i--;
         break;
       case '<':
-        pushAlpha(SYM_LCARET[row], data, &count, &reg);
+        if (pushAlpha(SYM_LCARET[row], data, &count, &reg)) i--;
         break;
       case '>':
-        pushAlpha(SYM_RCARET[row], data, &count, &reg);
+        if (pushAlpha(SYM_RCARET[row], data, &count, &reg)) i--;
         break;
       case '0':
-        pushNum(SYM_0[row], data, &count, &reg);
+        if (pushNum(SYM_0[row], data, &count, &reg)) i--;
         break;
       case '1':
-        pushNum(SYM_1[row], data, &count, &reg);
+        if (pushNum(SYM_1[row], data, &count, &reg)) i--;
         break;
       case '2':
-        pushNum(SYM_2[row], data, &count, &reg);
+        if (pushNum(SYM_2[row], data, &count, &reg)) i--;
         break;
       case '3':
-        pushNum(SYM_3[row], data, &count, &reg);
+        if (pushNum(SYM_3[row], data, &count, &reg)) i--;
         break;
       case '4':
-        pushNum(SYM_4[row], data, &count, &reg);
+        if (pushNum(SYM_4[row], data, &count, &reg)) i--;
         break;
       case '5':
-        pushNum(SYM_5[row], data, &count, &reg);
+        if (pushNum(SYM_5[row], data, &count, &reg)) i--;
         break;
       case '6':
-        pushNum(SYM_6[row], data, &count, &reg);
+        if (pushNum(SYM_6[row], data, &count, &reg)) i--;
         break;
       case '7':
-        pushNum(SYM_7[row], data, &count, &reg);
+        if (pushNum(SYM_7[row], data, &count, &reg)) i--;
         break;
       case '8':
-        pushNum(SYM_8[row], data, &count, &reg);
+        if (pushNum(SYM_8[row], data, &count, &reg)) i--;
         break;
       case '9':
-        pushNum(SYM_9[row], data, &count, &reg);
+        if (pushNum(SYM_9[row], data, &count, &reg)) i--;
         break;
       case ' ':
-        pushNum(SYM_SPACE[row], data, &count, &reg);
+        if (pushNum(SYM_SPACE[row], data, &count, &reg)) i--;
         break;
       case '=':
-        pushNum(SYM_EQUAL[row], data, &count, &reg);
+        if (pushNum(SYM_EQUAL[row], data, &count, &reg)) i--;
         break;
       case '-':
-        pushNum(SYM_MINUS[row], data, &count, &reg);
+        if (pushNum(SYM_MINUS[row], data, &count, &reg)) i--;
         break;
       case '{':
-        pushNum(SYM_LBRACE[row], data, &count, &reg);
+        if (pushNum(SYM_LBRACE[row], data, &count, &reg)) i--;
         break;
       case '}':
-        pushNum(SYM_RBRACE[row], data, &count, &reg);
+        if (pushNum(SYM_RBRACE[row], data, &count, &reg)) i--;
         break;
       case '\'':
-        pushNum(SYM_APOST[row], data, &count, &reg);
+        if (pushNum(SYM_APOST[row], data, &count, &reg)) i--;
         break;
       case '"':
-        pushNum(SYM_QUOTE[row], data, &count, &reg);
+        if (pushNum(SYM_QUOTE[row], data, &count, &reg)) i--;
         break;
       case ':':
-        pushMisc(SYM_COLON[row], data, &count, &reg);
+        if (pushMisc(SYM_COLON[row], data, &count, &reg)) i--;
         break;
       case '(':
-        pushMisc(SYM_LPAREN[row], data, &count, &reg);
+        if (pushMisc(SYM_LPAREN[row], data, &count, &reg)) i--;
         break;
       case ')':
-        pushMisc(SYM_RPAREN[row], data, &count, &reg);
+        if (pushMisc(SYM_RPAREN[row], data, &count, &reg)) i--;
         break;
       case '.':
-        pushMisc(SYM_PER[row], data, &count, &reg);
+        if (pushMisc(SYM_PER[row], data, &count, &reg)) i--;
         break;
       case '[':
-        pushMisc(SYM_LBRACK[row], data, &count, &reg);
+        if (pushMisc(SYM_LBRACK[row], data, &count, &reg)) i--;
         break;
       case ']':
-        pushMisc(SYM_RBRACK[row], data, &count, &reg);
+        if (pushMisc(SYM_RBRACK[row], data, &count, &reg)) i--;
         break;
       case ';':
-        pushMisc(SYM_SEMICLN[row], data, &count, &reg);
+        if (pushMisc(SYM_SEMICLN[row], data, &count, &reg)) i--;
         break;
       case ',':
-        pushMisc(SYM_COMMA[row], data, &count, &reg);
+        if (pushMisc(SYM_COMMA[row], data, &count, &reg)) i--;
         break;
       case '|':
-        pushMisc(SYM_PIPE[row], data, &count, &reg);
+        if (pushMisc(SYM_PIPE[row], data, &count, &reg)) i--;
         break;
       default:
-        pushNum(SYM_SPACE[row], data, &count, &reg);
+        if (pushNum(SYM_SPACE[row], data, &count, &reg)) i--;
         break;
     }
   }
   return;
 }
 
-// Draws text onto matrix at given shift
-void drawText(String text, int shift) {
-  int data[3];
-  text.toUpperCase();
+// Draws text onto matrix that does not scroll
+void drawStaticText(int *data) {
+  int *ptr = data;
+  int cRow = 0;
+  int shift = 23; // align text to left-side of matrix
   for (int row = 0; row < 8; row++) {
-    getData(text, data, row, shift);
+    // load info onto data array, one row at a time
+    getData(ptr, row, shift);
+    ptr += 3;
+  }
+  while (!Serial.available()) {
+    // push data from data array onto shift registers
     digitalWrite(LATCH, LOW);
-    shiftOut(SER, CLK, LSBFIRST, ~data[2]);
-    shiftOut(SER, CLK, LSBFIRST, ~data[1]);
-    shiftOut(SER, CLK, LSBFIRST, ~data[0]);
-    shiftOut(SER, CLK, MSBFIRST, ROWS[row]);
+    shiftOut(SER, CLK, LSBFIRST, ~data[2 + 3 * (cRow % 8)]);
+    shiftOut(SER, CLK, LSBFIRST, ~data[1 + 3 * (cRow % 8)]);
+    shiftOut(SER, CLK, LSBFIRST, ~data[0 + 3 * (cRow % 8)]);
+    shiftOut(SER, CLK, MSBFIRST, ROWS[cRow % 8]);
     digitalWrite(LATCH, HIGH);
+    cRow++;
     delay(1);
   }
 }
 
-// Displays text with or without scrolling animation
-void displayText(String text, boolean scrollIsOn) {
-  if (!scrollIsOn) drawText(text, 23);
-  else {
-    unsigned long time;
-    int timeDelay = 35;
-    int cycleLength = 6 * text.length() + 40;
-    for (int i = 0; i < cycleLength; i++) {
-      time = millis();
-      while (millis() - time < timeDelay) drawText(text, i);
+// Draws text onto matrix that scrolls
+void drawScrollingText(int *data) {
+  int *ptr = data;
+  int totalShifts = 6 * text.length() + 40; // for one cycle
+  int totalCycles = 3; // determines scroll speed
+  pos = 23;
+  for (int shift = 0; shift < totalShifts; shift++) {
+    if (Serial.available()) return;
+    for (int row = 0; row < 8; row++) {
+      // load info onto data array, one row at a time
+      getData(ptr, row, shift);
+      ptr += 3;
     }
+    ptr = data; // reset ptr to beginning of data array
+    int cRow = 0;
+    int cCycle = 0;
+    while (!Serial.available() && cCycle < totalCycles) {
+      // push data from data array onto shift registers
+      digitalWrite(LATCH, LOW);
+      shiftOut(SER, CLK, LSBFIRST, ~data[2 + 3 * (cRow % 8)]);
+      shiftOut(SER, CLK, LSBFIRST, ~data[1 + 3 * (cRow % 8)]);
+      shiftOut(SER, CLK, LSBFIRST, ~data[0 + 3 * (cRow % 8)]);
+      shiftOut(SER, CLK, MSBFIRST, ROWS[cRow % 8]);
+      digitalWrite(LATCH, HIGH);
+      delay(1);
+      cRow++;
+      if (cRow % 8 == 0) cCycle++;
+    }
+    pos--;
   }
 }
 
-// Arduino-required setup function
+// Displays text
+void displayText(boolean scrollIsOn) {
+  // empty array that contains data to display on matrix
+  // 3 ints needed to display each row on matrix and 8 rows in matrix
+  int data[3 * 8];
+  if (!scrollIsOn) drawStaticText(data);
+  else drawScrollingText(data);
+}
+
+// Arduino-compulsory setup function
 void setup() {
   pinMode(SER, OUTPUT);
   pinMode(LATCH, OUTPUT);
@@ -495,13 +547,14 @@ void setup() {
   Serial.begin(9600);
 }
 
-// Arduino-required loop function
+// Arduino-compulsory loop function
 void loop() {
-  String text = "done";
-  /*
-  while (Serial.available() > 0) {
+  // read data
+  while (Serial.available()) {
     text += char(Serial.read());
   }
-  */
-  displayText(text, false);
+  // display text
+  text.toUpperCase();
+  cText = text;
+  displayText(true);
 }
